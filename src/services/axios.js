@@ -1,4 +1,5 @@
 import axios from 'axios';
+import {ElMessage} from "element-plus";
 
 const api = axios.create({
     baseURL: 'https://arxiv.py00.top/api/',
@@ -22,7 +23,12 @@ api.interceptors.request.use(config => {
 api.interceptors.response.use(response => {
     return response.data;
 }, error => {
-    console.log(error);
+    if (error.response && error.response.status === 401) {
+        localStorage.removeItem('authToken');
+        ElMessage.error("Not logged in. Please sign in first.");
+        window.location = '/#/user/login';
+        return "";
+    }
     const errorResponse = error.response ? error.response.data : error.message;
     return Promise.reject(errorResponse);
 });
