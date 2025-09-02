@@ -44,6 +44,19 @@ const loadPapers = async () => {
   loading.value = false;
 }
 
+const changeQuery = () => {
+  router.push({
+    name: "Papers",
+    query: {
+      kw: kw.value,
+      subjects: subjects.value,
+      pageNum: pageNum.value,
+      pageSize: pageSize.value,
+      ...filters.value,
+    }
+  })
+}
+
 const previewURL = ref('');
 const changePreviewURL = (url) => {
   previewURL.value = url;
@@ -53,13 +66,13 @@ onMounted(loadPapers);
 watch([
   kw, subjects, pageNum, pageSize,
 ], () => {
-  loadPapers();
+  changeQuery();
 })
 watch(filters, () => {
   pageNum.value = 1
   pageSize.value = 10
   totalCount.value = 1
-  loadPapers();
+  changeQuery();
 }, {deep: true})
 const changePage = (newPageNum) => {
   pageNum.value = newPageNum;
