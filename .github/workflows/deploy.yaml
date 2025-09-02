@@ -2,9 +2,9 @@ name: Build and Deploy App
 
 on:
   push:
-    branches: ["fe-page"]
+    branches: ["dev-fe"]
   pull_request:
-    branches: ["fe-page"]
+    branches: ["dev-fe"]
 
 jobs:
   build-and-deploy:
