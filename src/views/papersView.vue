@@ -1,9 +1,9 @@
 <script setup>
-import {ref, watch, onBeforeMount, onBeforeUnmount, onMounted, inject} from "vue";
+import {ref, watch, onMounted} from "vue";
 import {useRoute, useRouter} from "vue-router";
 
 import {queryPapers} from "@/services/queryPapers.js";
-import {textToImage} from "@/services/utils.js";
+import {strToBool, textToImage} from "@/services/utils.js";
 import PaperTableSummary from "@/components/PaperTableSummary.vue";
 import PaperTableMarks from "@/components/PaperTableMarks.vue";
 
@@ -18,10 +18,10 @@ const pageSize = ref(parseInt(route.query.pageSize || 10));
 const totalCount = ref(1);
 
 const filters = ref({
-  is_read: false,
-  is_favorite: false,
-  is_uninterested: false, // Ignore Uninterested
-  is_to_read: false,
+  is_read: strToBool(route.query.is_read) || false,
+  is_favorite: strToBool(route.query.is_favorite) || false,
+  is_uninterested: strToBool(route.query.is_uninterested) || false, // Ignore Uninterested
+  is_to_read: strToBool(route.query.is_to_read) || false,
 });
 
 const papers = ref([]);
@@ -53,22 +53,12 @@ onMounted(loadPapers);
 watch([
   kw, subjects, pageNum, pageSize,
 ], () => {
-  router.push({
-    name: "Papers",
-    query: {
-      kw: kw.value,
-      subjects: subjects.value,
-      pageNum: pageNum.value,
-      pageSize: pageSize.value,
-      ...filters.value,
-    }
-  });
+  loadPapers();
 })
 watch(filters, () => {
   pageNum.value = 1
   pageSize.value = 10
   totalCount.value = 1
-  console.log(filters)
   loadPapers();
 }, {deep: true})
 const changePage = (newPageNum) => {
@@ -79,7 +69,7 @@ const changePage = (newPageNum) => {
 <template>
   <div class="header-op">
     <el-space class="filter-box" style=" "
-              v-for="i in 2"
+              v-for="i in 2" :key="i"
     >
       <el-switch v-model="filters.is_read"
                  :active-value="true"
@@ -130,10 +120,10 @@ const changePage = (newPageNum) => {
           <el-badge
               :is-dot="scope.row.marks.is_read" color="#a0d0d0"
           />
-         <el-badge
+          <el-badge
               :is-dot="scope.row.marks.is_favorite" color="#dca7eb"
           />
-         <el-badge
+          <el-badge
               :is-dot="scope.row.marks.note" color="#eae936"
           />
 

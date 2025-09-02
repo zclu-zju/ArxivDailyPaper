@@ -49,5 +49,10 @@ function textToImage(text, options = {}) {
     return canvas.toDataURL("image/png")
 }
 
+function strToBool(val) {
+    if (val === "true") {return true;}
+    if (val === "false") {return false;}
+    return val;
+}
 
-export {textToImage};
+export {textToImage, strToBool};
