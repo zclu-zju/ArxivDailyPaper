@@ -2,7 +2,7 @@ import axios from 'axios';
 import {ElMessage} from "element-plus";
 
 const api = axios.create({
-    baseURL: 'https://arxiv.py00.top/api/',
+    baseURL: 'https://arxiv.web.py00.cn/api/',
     // baseURL: 'http://127.0.0.1:54025/api/',
     timeout: 5000,
     headers: {

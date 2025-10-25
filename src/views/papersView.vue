@@ -2,7 +2,7 @@
 import {ref, watch, onMounted} from "vue";
 import {useRoute, useRouter} from "vue-router";
 
-import {queryPapers} from "@/services/queryPapers.js";
+import {getAllPaperCategories, queryPapers} from "@/services/queryPapers.js";
 import {strToBool, textToImage} from "@/services/utils.js";
 import PaperTableSummary from "@/components/PaperTableSummary.vue";
 import PaperTableMarks from "@/components/PaperTableMarks.vue";
@@ -28,6 +28,7 @@ const papers = ref([]);
 const loadPapers = async () => {
   papers.value.length = 0;
   loading.value = true;
+  await getAllPaperCategories()
   const data = await queryPapers(
       pageNum.value,
       pageSize.value,

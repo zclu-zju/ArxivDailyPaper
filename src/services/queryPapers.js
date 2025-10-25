@@ -43,5 +43,18 @@ const getPaperDetail = async (doi) => {
     }
 }
 
+const getAllPaperCategories = async () => {
+    try {
+        const response = await api.get(
+            `/papers/category/`,
+        )
+        return response
+    } catch (error) {
+        ElMessage.error({
+            message: "Get all categories: " + error,
+        })
+        return null
+    }
+}
 
-export {queryPapers, getPaperDetail};
+export {queryPapers, getPaperDetail, getAllPaperCategories};
