@@ -1,4 +1,4 @@
-import json
+import time
 from requests import Session
 from lxml.etree import HTML
 import redis
@@ -81,7 +81,6 @@ def check_and_create_user_table():
 
 
 def insert_mysql_bulk(data_list):
-    """批量插入或更新论文数据"""
     if not data_list:
         return
 
@@ -117,19 +116,18 @@ def save_or_skip_to_redis(r, block):
     """检查 Redis 去重，保存新论文"""
     if r.hexists("arxiv_papers", block['doi']):
         return False
-    r.hset("arxiv_papers", block['doi'], json.dumps(block))
+    r.hset("arxiv_papers", block['doi'], 1)
     return True
 
 
 def get_id_list(url):
-    """抓取 recent 页面的所有 doi"""
     session = Session()
     session.headers.update({
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
                       'AppleWebKit/537.36 (KHTML, like Gecko) '
                       'Chrome/96.0.4664.110 Safari/537.36'
     })
-    content = session.get(url).text
+    content = session.get(url, timeout=5).text
     html = HTML(content)
     block1 = html.xpath(xpath_config['block1'])
     id_list = []
@@ -142,31 +140,32 @@ def get_id_list(url):
 
 
 def fetch_arxiv_data(id_list):
-    """使用 arxiv pypi 获取论文详细信息"""
     results = []
     client = arxiv.Client()
-    search = arxiv.Search(id_list=id_list)
-    for result in client.results(search):
-        paper = {
-            "doi": result.get_short_id(),
-            "url": result.entry_id,
-            "title": result.title.strip(),
-            "authors": [a.name for a in result.authors],
-            "subjects": [t for t in result.categories],
-            "summary": result.summary.strip().replace('\n', ' ')
-        }
-        results.append(paper)
+    for id_list_grouped in [id_list[i:i + 100] for i in range(0, len(id_list), 100)]:
+        search = arxiv.Search(id_list=id_list_grouped)
+        for result in client.results(search):
+            paper = {
+                "doi": result.get_short_id(),
+                "url": result.entry_id,
+                "title": result.title.strip(),
+                "authors": [a.name for a in result.authors],
+                "subjects": [t for t in result.categories],
+                "summary": result.summary.strip().replace('\n', ' ')
+            }
+            results.append(paper)
     return results
 
 
 def main(url):
+    print("Start fetching papers from %s" % url)
     check_and_create_table()
     check_and_create_user_table()
     r = redis.Redis(**REDIS_CONFIG)
 
     id_list = get_id_list(url)
     if not id_list:
-        notice("No papers found on the page.")
+        notice("No papers found on the page." + url)
         return 0
 
     papers = fetch_arxiv_data(id_list)
@@ -176,12 +175,16 @@ def main(url):
         if save_or_skip_to_redis(r, paper):
             new_papers.append(paper)
 
-    # 一次性写入 MySQL
     insert_mysql_bulk(new_papers)
 
-    notice("Today's paper has been fetched successfully. Total %d new papers" % len(new_papers))
     return len(new_papers)
 
 
 if __name__ == '__main__':
-    result = main('https://arxiv.org/list/eess.SP/recent?skip=0&show=2000')
+    with open('app/subjects.txt', 'r') as f:
+        subjects = [line.strip() for line in f.readlines() if len(line.strip()) > 0]
+    total_paper = 0
+    for subject in subjects:
+        total_paper += main('https://arxiv.org/list/%s/recent?skip=0&show=2000' % subject)
+        time.sleep(5)
+    notice("Today's paper has been fetched successfully. Total %d new papers" % total_paper)

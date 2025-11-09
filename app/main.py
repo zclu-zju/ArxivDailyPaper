@@ -1,3 +1,4 @@
+import os
 from typing import Dict, Any
 
 from fastapi import FastAPI, Depends, HTTPException, Query, Request, Body
@@ -298,6 +299,14 @@ def get_user_marks(user_id: int, db: Session = Depends(get_db)):
         )
         for p in papers
     ]
+
+
+@app.get("/papers/category/")
+def get_papers_categories():
+    run_dir = os.path.dirname(os.path.abspath(__file__))
+    with open(os.path.join(run_dir, "subjects.txt"), "r") as f:
+        subjects = [line.strip() for line in f.readlines()]
+    return {"subjects": subjects}
 
 
 # -------- 按学科获取 --------
