@@ -22,9 +22,7 @@ const changePreviewURL = (url) => {
       size="large"
   >
     <el-descriptions-item label="Paper Title" :span="3">
-      <el-text>
-        {{ row.title }}
-      </el-text>
+      <el-text v-html="row.title"/>
     </el-descriptions-item>
     <el-descriptions-item label="Paper Link">
       <el-link :href="row.url" type="info">
@@ -51,7 +49,7 @@ const changePreviewURL = (url) => {
                 changePreviewURL(row.src);
               }">Paper Abstract</span>
       </template>
-      <el-text>{{ row.summary }}</el-text>
+      <el-text v-html="row.summary"></el-text>
     </el-descriptions-item>
   </el-descriptions>
 

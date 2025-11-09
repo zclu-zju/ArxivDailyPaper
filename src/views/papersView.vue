@@ -40,6 +40,13 @@ const loadPapers = async () => {
   totalCount.value = data.total;
   for (const item of data.items) {
     item.src = textToImage(item.summary);
+
+    if(kw.value!=="") {
+      item.title = item.title.replaceAll(kw.value, `<span class="highlight">${kw.value}</span>`);
+      item.summary = item.summary.replaceAll(kw.value, `<span class="highlight">${kw.value}</span>`);
+    }
+
+    item.title = `<span>${item.title}</span>`
   }
   papers.value.push(...data.items)
   loading.value = false;
@@ -65,7 +72,7 @@ const changePreviewURL = (url) => {
 
 onMounted(loadPapers);
 watch([
-  kw, subjects, pageNum, pageSize,
+  subjects, pageNum, pageSize,
 ], () => {
   changeQuery();
 })
@@ -75,12 +82,24 @@ watch(filters, () => {
   totalCount.value = 1
   changeQuery();
 }, {deep: true})
+
 const changePage = (newPageNum) => {
   pageNum.value = newPageNum;
+}
+
+const changeKW = () => {
+  pageNum.value = 1;
+  pageSize.value = 10;
+  changeQuery();
 }
 </script>
 
 <template>
+  <div style="width: 30%;">
+    <el-form @submit.prevent="changeKW">
+      <el-input v-model="kw" placeholder="Search..."/>
+    </el-form>
+  </div>
   <div class="header-op">
     <el-space class="filter-box" style=" "
               v-for="i in 2" :key="i"
@@ -105,7 +124,7 @@ const changePage = (newPageNum) => {
       />
     </el-space>
   </div>
-  <el-scrollbar style="height: calc(100vh - 180px)">
+  <el-scrollbar style="height: calc(100vh - 210px)">
     <el-table v-loading="loading" :data="papers">
       <el-table-column type="expand">
         <template #default="scope">
@@ -128,8 +147,9 @@ const changePage = (newPageNum) => {
           <el-link @click="router.push({
               name: 'PaperDetail',
               params: {doi: scope.row.doi},
-            })" :style="{'text-decoration': scope.row.marks.is_uninterested? 'line-through':'none'}">
-            {{ scope.row.title }}
+            })" :style="{'text-decoration': scope.row.marks.is_uninterested? 'line-through':'none'}"
+                   v-html="scope.row.title"
+          >
           </el-link>
           <el-badge
               :is-dot="scope.row.marks.is_read" color="#a0d0d0"
